@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 
 //gcc main.c header_files/matrix_functions.c -o main -Iheader_files -lm
 
@@ -7,13 +8,12 @@
 
 
 int main(){
-	Matrix * m1 = createMatrix(3,2);
-	fillMatrix(m1, 3);
-	Matrix * m2 = createMatrix(3,2);
-	fillMatrix(m2, 2);
+	Matrix * m = createMatrix(9,9);
+	char *s = (char*)malloc(50*sizeof(char));
+	strcpy(s,"D:\\Datasets\\sudoku scrambles\\sample.csv");
+	m = loadMatrix(s);
 	printf("\n");
-	Matrix * mat = subtract(m1,m2);
-	printMatrix(mat);
-	freeMatrix(m1);
-	freeMatrix(m2);
+	printMatrix(m);
+	free(s);
+	freeMatrix(m);
 }
