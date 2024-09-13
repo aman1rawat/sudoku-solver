@@ -1,141 +1,156 @@
 #include<stdio.h>
-#include<stdlib.h>
+#include<stdlib.h>  
+#include<stdbool.h>
 #include<math.h>
 #include<limits.h>
 #include "matrix_functions.h"
+#include "NN_functions.h"
 
-
-typedef struct{
-    int filter_size;
-    int stride;
-    Matrix *filter;
-    Matrix *output;
-}Convo_Layer;
-
-typedef struct{
-    int filter_size;
-    int stride;
-    Matrix *output;
-}Pooling_Layer;
-
-typedef struct {
-    Matrix* data;  
-} Input_Layer;
-
-typedef struct {
-    Matrix* weights; 
-    Matrix* biases;   
-    Matrix* output;   
-} Hidden_Layer;
-
-typedef struct {
-    Matrix* data;    
-    Matrix* targets;  
-} Output_Layer;
-
-Convo_Layer * createConvoLayer(int filter_size, int stride){
-    Convo_Layer *layer = (Convo_Layer*)malloc(sizeof(Convo_Layer));
-    layer->filter_size = filter_size;
-    layer->stride = stride;
-    layer->filter = createMatrix(filter_size, filter_size);
-    initializeMatrix(layer->filter);
-
-    return layer;
+Matrix* createFilter(int size) {
+    Matrix *filter = createMatrix(size, size);
+    initializeMatrix(filter);
+    return filter;
 }
 
-void freeConvoLayer(Convo_Layer *layer){
-    if(layer){
-        if(layer->filter){
-            freeMatrix(layer->filter);
-        }
-        if(layer->output){
-            freeMatrix(layer->output);
-        }
-        free(layer);
-    }
-}
+Matrix* forwardConvolution(Matrix *input, Matrix *filter, int stride, bool same_padding) {
+    int pad_height = 0;
+    int pad_width = 0;
 
-void convolution(Convo_Layer *layer, Matrix *input) {
-    int output_rows = (input->row - layer->filter_size) / layer->stride + 1;
-    int output_cols = (input->col - layer->filter_size) / layer->stride + 1;
-
-
-    if(!layer->output){
-        layer->output = createMatrix(output_rows, output_cols);
-        initializeMatrix(layer->output);
+    if (same_padding) {
+        pad_height = (filter->row - 1) / 2; // Calculate vertical padding
+        pad_width = (filter->col - 1) / 2;  // Calculate horizontal padding
     }
 
+    int output_rows = (input->row + 2 * pad_height - filter->row) / stride + 1;
+    int output_cols = (input->col + 2 * pad_width - filter->col) / stride + 1;
+
+    Matrix *output = createMatrix(output_rows, output_cols);
+
+    Matrix *padded_input = (same_padding) ? applyPadding(input, pad_height, pad_width) : copyMatrix(input);
+
+    // Perform convolution
     for (int i = 0; i < output_rows; i++) {
         for (int j = 0; j < output_cols; j++) {
             double sum = 0.0;
-            for (int ki = 0; ki < layer->filter_size; ki++) {
-                for (int kj = 0; kj < layer->filter_size; kj++) {
-                    int row = i * layer->stride + ki;
-                    int col = j * layer->stride + kj;
-                    sum += input->val[row][col] * layer->filter->val[ki][kj];
+            for (int fi = 0; fi < filter->row; fi++) {
+                for (int fj = 0; fj < filter->col; fj++) {
+                    sum += padded_input->val[i * stride + fi][j * stride + fj] * filter->val[fi][fj];
                 }
             }
-            layer->output->val[i][j] = sum;
+            output->val[i][j] = sum;
         }
     }
+
+    freeMatrix(padded_input);
+
+    return output;
 }
 
-Pooling_Layer * createPoolingLayer(int filter_size, int stride){
-    Pooling_Layer * layer = (Pooling_Layer*)malloc(sizeof(Pooling_Layer));
-    layer->filter_size = filter_size;
-    layer->stride = stride;
-    return layer;
-}
-
-void freePoolingLayer(Pooling_Layer *layer){
-    if(layer){
-        free(layer);
-    }
-}
-
-void Pool(Pooling_Layer *pool, Matrix *input) {
-    int output_rows = (input->row - pool->filter_size) / pool->stride + 1;
-    int output_cols = (input->col - pool->filter_size) / pool->stride + 1;
+// Pooling Layer Functions
+Matrix* forwardPooling(Matrix *input, int filter_size, int stride) {
+    int output_rows = (input->row - filter_size) / stride + 1;
+    int output_cols = (input->col - filter_size) / stride + 1;
+    Matrix *output = createMatrix(output_rows, output_cols);
 
     for (int i = 0; i < output_rows; i++) {
         for (int j = 0; j < output_cols; j++) {
-            double max_val = INT_MIN;  
-            for (int ki = 0; ki < pool->filter_size; ki++) {
-                for (int kj = 0; kj < pool->filter_size; kj++) {
-                    int row = i * pool->stride + ki;
-                    int col = j * pool->stride + kj;
-                    if (row < input->row && col < input->col) {
-                        double value = input->val[row][col];
-                        if (value > max_val) {
-                            max_val = value;
-                        }
+            double max_val = INT_MIN;
+            for (int fi = 0; fi < filter_size; fi++) {
+                for (int fj = 0; fj < filter_size; fj++) {
+                    double current_val = input->val[i * stride + fi][j * stride + fj];
+                    if (current_val > max_val) {
+                        max_val = current_val;
                     }
                 }
             }
-            pool->output->val[i][j] = max_val;
+            output->val[i][j] = max_val;
         }
     }
+    return output;
 }
 
-void createInputLayer(Input_Layer * layer){
-    layer = (Input_Layer*)malloc(sizeof(Input_Layer));
+// Fully Connected Layer Functions
+Matrix* forwardFullyConnected(Matrix *input, Matrix *weights, Matrix *biases) {
+    Matrix *output = dot(weights, input);
+    output = add(output, biases);
+    return output;
 }
 
-void freeInputLayer(Pooling_Layer *layer){
-    if(layer){
-        if(layer->output){
-            freeMatrix(layer->output);
+Matrix* applyPadding(Matrix *input, int pad_height, int pad_width) {
+    // Create a new matrix with padded dimensions
+    Matrix *padded_matrix = createMatrix(input->row + 2 * pad_height, input->col + 2 * pad_width);
+    
+    // Initialize padded matrix with zeros
+    for (int i = 0; i < padded_matrix->row; i++) {
+        for (int j = 0; j < padded_matrix->col; j++) {
+            if (i < pad_height || i >= padded_matrix->row - pad_height || 
+                j < pad_width || j >= padded_matrix->col - pad_width) {
+                padded_matrix->val[i][j] = 0; // Set padding to zero
+            } else {
+                padded_matrix->val[i][j] = input->val[i - pad_height][j - pad_width];
+            }
         }
-        free(layer);
     }
+    
+    return padded_matrix;
 }
 
-
-
-float sigmoid(float x) {
-    return 1 / (1 + expf(-x));
+// Activation Functions
+Matrix* applyReLU(Matrix *input) {
+    Matrix *output = copyMatrix(input);
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            output->val[i][j] = fmax(0, output->val[i][j]);
+        }
+    }
+    return output;
 }
 
-float sigmoid_derivative(float x) {
-    return x * (1 - x);
+Matrix* applySigmoid(Matrix *input) {
+    Matrix *output = copyMatrix(input);
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            output->val[i][j] = 1 / (1 + exp(-output->val[i][j]));
+        }
+    }
+    return output;
 }
+
+Matrix* applySoftmax(Matrix *input) {
+    Matrix *output = copyMatrix(input);
+    double sum = 0.0;
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            sum += exp(output->val[i][j]);
+        }
+    }
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            output->val[i][j] = exp(output->val[i][j]) / sum;
+        }
+    }
+    return output;
+}
+
+// Loss Functions
+double calculateMeanSquaredError(Matrix *output, Matrix *targets) {
+    double error = 0.0;
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            double diff = output->val[i][j] - targets->val[i][j];
+            error += diff * diff;
+        }
+    }
+    return error / (output->row * output->col);
+}
+
+double calculateCrossEntropyLoss(Matrix *output, Matrix *targets) {
+    double loss = 0.0;
+    for (int i = 0; i < output->row; i++) {
+        for (int j = 0; j < output->col; j++) {
+            loss += targets->val[i][j] * log(fmax(1e-10, output->val[i][j]));
+        }
+    }
+    return -loss / (output->row * output->col);
+}
+

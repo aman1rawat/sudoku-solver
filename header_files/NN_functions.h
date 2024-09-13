@@ -2,53 +2,32 @@
 #define NN_FUNCTIONS_H
 
 #include "matrix_functions.h"
+#include<stdbool.h>
 
-typedef struct{
-    int filter_size;
-    int stride;
-    Matrix *filter;
-    Matrix *output;
-}Convo_Layer;
+Matrix* createFilter(int size);
 
-typedef struct{
-    int filter_size;
-    int stride;
-    Matrix *output;
-}Pooling_Layer;
+Matrix* forwardConvolution(Matrix *input, Matrix *filter, int stride, bool same_padding);
 
-typedef struct {
-    Matrix* data;  
-} Input_Layer;
+// Pooling Layer Functions
+Matrix* forwardPooling(Matrix *input, int filter_size, int stride);
 
-typedef struct {
-    Matrix* weights; 
-    Matrix* biases;   
-    Matrix* output;   
-} Hidden_Layer;
+// Fully Connected Layer Functions
+Matrix* forwardFullyConnected(Matrix *input, Matrix *weights, Matrix *biases);
 
-typedef struct {
-    Matrix* data;    
-    Matrix* targets;  
-} Output_Layer;
+Matrix* applyPadding(Matrix *input, int pad_height, int pad_width);
 
-Convo_Layer * createConvoLayer(int filter_size, int stride);
+// Activation Functions
+Matrix* applyReLU(Matrix *input);
 
-void freeConvoLayer(Convo_Layer *layer);
+Matrix* applySigmoid(Matrix *input);
 
-void convolution(Convo_Layer *layer, Matrix *input) ;
+Matrix* applySoftmax(Matrix *input);
 
-Pooling_Layer * createPoolingLayer(int filter_size, int );
+// Loss Functions
+double calculateMeanSquaredError(Matrix *output, Matrix *targets);
 
-void freePoolingLayer(Pooling_Layer *layer);
+double calculateCrossEntropyLoss(Matrix *output, Matrix *targets);
+// Training Functions
 
-void Pool(Pooling_Layer *pool, Matrix *input);
-
-void createInputLayer(Input_Layer * layer);
-
-void freeInputLayer(Pooling_Layer *layer);
-
-float sigmoid(float x);
-
-float sigmoid_derivative(float x);
 
 #endif
