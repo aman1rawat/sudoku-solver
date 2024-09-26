@@ -19,7 +19,7 @@ Matrix * createMatrix(int row, int col){
 void initializeMatrix(Matrix *m){
 	for(int i=0;i<m->row;i++){
 		for(int j=0;j<m->col;j++){
-			m->val[i][j] = (float)rand()/(float)RAND_MAX;
+			m->val[i][j] = ((float)rand()/(float)RAND_MAX)/10.0;
 		}
 	}
 }
@@ -44,7 +44,7 @@ void printMatrix(Matrix* m) {
 	printf("Rows: %d Columns: %d\n", m->row, m->col);
 	for (int i = 0; i < m->row; i++) {
 		for (int j = 0; j < m->col; j++) {
-			printf("%1.3f ", m->val[i][j]);
+			printf("%0.6f ", m->val[i][j]);
 		}
 		printf("\n");
 	}
@@ -109,13 +109,16 @@ Matrix* loadMatrix(char* file_string) {
 }
 
 Matrix* flattenMatrix(Matrix* m) {
-	Matrix* matrix = createMatrix(1, m->row*m->col);
-	for (int i = 0; i < m->row; i++) {
-		for (int j = 0; j < m->col; j++) {
-			matrix->val[0][i * m->col + j] = m->val[i][j];
-		}
-	}
-	return matrix;
+    Matrix* matrix = createMatrix(m->row * m->col, 1);
+    
+    for (int i = 0; i < m->row; i++) {
+        for (int j = 0; j < m->col; j++) {
+            // Assign values to the new column matrix
+            matrix->val[i * m->col + j][0] = m->val[i][j];
+        }
+    }
+    
+    return matrix; 
 }
 
 Matrix* multiply(Matrix *m1, Matrix *m2){
