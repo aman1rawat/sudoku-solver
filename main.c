@@ -43,116 +43,116 @@ int main(){
 
 	for(int epoch=0;epoch<batch_size;epoch++){
 		if(!convo1_filter) convo1_filter =  createFilter(convo_filter_size);
-		printf("convo1 filter created\n");
-		printMatrix(convo1_filter);
+		//printf("convo1 filter created\n");
+		//printMatrix(convo1_filter);
 		if(!convo2_filter) convo2_filter =  createFilter(convo_filter_size);
-		printf("\nconvo2 filter created\n");
-		printMatrix(convo2_filter);
+		//printf("\nconvo2 filter created\n");
+		//printMatrix(convo2_filter);
 		if(!convo3_filter) convo3_filter =  createFilter(convo_filter_size);
-		printf("\nconvo3 filter created\n");
-		printMatrix(convo3_filter);
+		//printf("\nconvo3 filter created\n");
+		//printMatrix(convo3_filter);
 
 		Matrix *convo1_output = forwardConvolution(input_sample[epoch], convo1_filter, 1, same_padding);
-		printf("\nforward convo 1 done\n");
-		printMatrix(convo1_output);
+		//printf("\nforward convo 1 done\n");
+		//printMatrix(convo1_output);
 
 		Matrix *convo2_output = forwardConvolution(convo1_output, convo2_filter, 1, same_padding);
-		printf("\nforward convo 2 done\n");
-		printMatrix(convo2_output);
+		//printf("\nforward convo 2 done\n");
+		//printMatrix(convo2_output);
 		Matrix *convo3_output = forwardConvolution(convo2_output, convo3_filter, 1, same_padding);
-		printf("\nforward convo 3 done\n");
-		printMatrix(convo3_output);
+		//printf("\nforward convo 3 done\n");
+		//printMatrix(convo3_output);
 
-		printf("\n");
+		//printf("\n");
 
 		convo3_output = applyPadding(convo3_output, 1, 1);
-		printf("Padding applied \n");
-		printMatrix(convo3_output);
+		//printf("Padding applied \n");
+		//printMatrix(convo3_output);
 
 		pooling_layer_output = forwardPooling(convo3_output, 2, 2);
-		printf("\npooling done\n");
-		printMatrix(pooling_layer_output);
-		printf("\n");
+		//printf("\npooling done\n");
+		//printMatrix(pooling_layer_output);
+		//printf("\n");
 
 		pooling_layer_output = flattenMatrix(pooling_layer_output);
-		printf("flattening done\n");
-		printMatrix(pooling_layer_output);
-		printf("\n");
+		//printf("flattening done\n");
+		//printMatrix(pooling_layer_output);
+		//printf("\n");
 
 
 
 		hidden_layer1 = createMatrix(hidden_layer1_size, 1);
-		printf("hidden layer 1 created\n");
+		//printf("hidden layer 1 created\n");
 		
 		if(!hidden_layer1_weights){
 			hidden_layer1_weights = createMatrix(hidden_layer1_size, pooling_layer_output->row);
 			initializeMatrix(hidden_layer1_weights);
-			printf("\nhidden layer 1 weights created\n");
-			printMatrix(hidden_layer1_weights);
+			//printf("\nhidden layer 1 weights created\n");
+			//printMatrix(hidden_layer1_weights);
 		}
 		if(!hidden_layer1_bias){
 			hidden_layer1_bias = createMatrix(hidden_layer1_size, 1);
 			initializeMatrix(hidden_layer1_bias);
-			printf("\nhidden layer 1 bias created\n");
-			printMatrix(hidden_layer1_bias);
+			//printf("\nhidden layer 1 bias created\n");
+			//printMatrix(hidden_layer1_bias);
 		}
 		hidden_layer1 =  forwardFullyConnected(pooling_layer_output, hidden_layer1_weights, hidden_layer1_bias);
-		printf("forward propagation 1 done\n");
+		//printf("forward propagation 1 done\n");
 		hidden_layer1 = applySigmoid(hidden_layer1);
-		printf("\nactivation 1 done\n");
-		printMatrix(hidden_layer1);
+		//printf("\nactivation 1 done\n");
+		//printMatrix(hidden_layer1);
 
 
 
 		hidden_layer2 = createMatrix(hidden_layer2_size, 1);
-		printf("hidden layer 2 created\n");	
-		printf("Row : %d    Columns : %d\n", hidden_layer2->row, hidden_layer2->col);
+		//printf("hidden layer 2 created\n");	
+		//printf("Row : %d    Columns : %d\n", hidden_layer2->row, hidden_layer2->col);
 
 		if(!hidden_layer2_weights){
 			hidden_layer2_weights = createMatrix(hidden_layer2_size, hidden_layer1_size);
 			initializeMatrix(hidden_layer2_weights);
-			printf("\nhidden layer 2 weights created\n");
-			printMatrix(hidden_layer2_weights);
+			//printf("\nhidden layer 2 weights created\n");
+			//printMatrix(hidden_layer2_weights);
 		}
-		printf("\n");
+		//printf("\n");
 		if(!hidden_layer2_bias){
 			hidden_layer2_bias = createMatrix(hidden_layer2_size, 1);
 			initializeMatrix(hidden_layer2_bias);
-			printf("hidden layer 2 bias created\n");
-			printMatrix(hidden_layer2_bias);
+			//printf("hidden layer 2 bias created\n");
+			//printMatrix(hidden_layer2_bias);
 		}
-		printf("\n");
+		//printf("\n");
 
 		hidden_layer2 =  forwardFullyConnected(hidden_layer1, hidden_layer2_weights, hidden_layer2_bias);
-		printf("forward propagation 2 done\n");
+		//printf("forward propagation 2 done\n");
 		hidden_layer2 = applySigmoid(hidden_layer2);
-		printf("activation 2 done\n");
-		printMatrix(hidden_layer2);
+		//printf("activation 2 done\n");
+		//printMatrix(hidden_layer2);
 
 
 		output_layer = createMatrix(output_layer_size, 1);
-		printf("output layer created\n");	
-		printf("Row : %d    Columns : %d\n", output_layer->row, output_layer->col);
+		//printf("output layer created\n");	
+		//printf("Row : %d    Columns : %d\n", output_layer->row, output_layer->col);
 
 		if(!output_layer_weights){
 			output_layer_weights = createMatrix(output_layer_size, hidden_layer2_size);
 			initializeMatrix(output_layer_weights);
-			printf("\noutput layer weights created\n");
+			//printf("\noutput layer weights created\n");
 			//printMatrix(output_layer_weights);
 		}
-		printf("\n");
+		//printf("\n");
 		if(!output_layer_bias){
 			output_layer_bias = createMatrix(output_layer_size, 1);
 			initializeMatrix(output_layer_bias);
-			printf("output layer bias created\n");
-			printMatrix(output_layer_bias);
+			//printf("output layer bias created\n");
+			//printMatrix(output_layer_bias);
 		}
-		printf("\n");
+		//printf("\n");
 		output_layer = forwardFullyConnected(hidden_layer2, output_layer_weights, output_layer_bias);
-		printf("output layer forward propagation done\n");
+		//printf("output layer forward propagation done\n");
 		output_layer = applySoftmax(output_layer);
-		printf("softmax done\n");
-        printMatrix(output_layer);
+		//printf("softmax done\n");
+        //printMatrix(output_layer);
 
 		Matrix *final_matrix = argmax(output_layer);
 		final_matrix = resize(final_matrix, 9, 9);
